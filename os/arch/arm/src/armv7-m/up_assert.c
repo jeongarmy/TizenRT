@@ -102,6 +102,16 @@
 #include "up_internal.h"
 #include "mpu.h"
 
+
+#include "../../src/imxrt/imxrt_gpio.h"
+#include "../../include/imxrt/imxrt102x_irq.h"
+#include "../../src/imxrt/chip/imxrt102x_pinmux.h"
+
+
+#define IOMUX_GOUT      (IOMUX_PULL_NONE | IOMUX_CMOS_OUTPUT | \
+                         IOMUX_DRIVE_40OHM | IOMUX_SPEED_MEDIUM | \
+                         IOMUX_SLEW_SLOW)
+
 #ifdef CONFIG_BINMGR_RECOVERY
 bool abort_mode = false;
 extern uint32_t g_assertpc;
@@ -460,6 +470,9 @@ void dump_all_stack(void)
  ****************************************************************************/
 void up_assert(const uint8_t *filename, int lineno)
 {
+	gpio_pinset_t w_set;
+	w_set = GPIO_PIN28 | GPIO_PORT1 | GPIO_OUTPUT | IOMUX_GOUT;
+
 	board_led_on(LED_ASSERTION);
 
 #if defined(CONFIG_DEBUG_DISPLAY_SYMBOL) || defined(CONFIG_BINMGR_RECOVERY)
@@ -467,9 +480,9 @@ void up_assert(const uint8_t *filename, int lineno)
 #endif
 
 #if CONFIG_TASK_NAME_SIZE > 0
-	lldbg("Assertion failed at file:%s line: %d task: %s\n", filename, lineno, this_task()->name);
+	//lldbg("Assertion failed at file:%s line: %d task: %s\n", filename, lineno, this_task()->name);
 #else
-	lldbg("Assertion failed at file:%s line: %d\n", filename, lineno);
+	//lldbg("Assertion failed at file:%s line: %d\n", filename, lineno);
 #endif
 
 #ifdef CONFIG_BINMGR_RECOVERY
@@ -490,7 +503,7 @@ void up_assert(const uint8_t *filename, int lineno)
 
 #endif  /* CONFIG_BINMGR_RECOVERY */
 
-	up_dumpstate();
+	//up_dumpstate();
 
 #if defined(CONFIG_BOARD_CRASHDUMP)
 	board_crashdump(up_getsp(), this_task(), (uint8_t *)filename, lineno);
@@ -500,6 +513,7 @@ void up_assert(const uint8_t *filename, int lineno)
 	if (is_kernel_fault == false) {
 		/* Recover user fault through binary manager */
 		binary_manager_recover_userfault(assert_pc);
+		imxrt_gpio_write(w_set, false);
 	} else
 #endif
 	{

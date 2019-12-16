@@ -225,8 +225,6 @@ void binary_manager_recover_userfault(uint32_t assert_pc)
 	int bin_idx;
 	struct tcb_s *tcb;
 	struct faultmsg_s *msg;
-//	gpio_pinset_t w_set;
-//	w_set = GPIO_PIN28 | GPIO_PORT1 | GPIO_OUTPUT | IOMUX_GOUT;
 
 	tcb = this_task();
 	if (tcb != NULL && tcb->group != NULL) {
@@ -255,7 +253,6 @@ void binary_manager_recover_userfault(uint32_t assert_pc)
 			if (g_faultmsg_sender->task_state == TSTATE_WAIT_FIN) {
 				up_recovery_task(g_faultmsg_sender);
 			}
-		//	imxrt_gpio_write(w_set, false);
 			return;
 		}
 	}

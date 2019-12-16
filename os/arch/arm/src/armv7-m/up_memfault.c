@@ -65,6 +65,16 @@
 #include "nvic.h"
 #include "up_internal.h"
 
+#include "../../src/imxrt/imxrt_gpio.h"
+#include "../../include/imxrt/imxrt102x_irq.h"
+#include "../../src/imxrt/chip/imxrt102x_pinmux.h"
+
+
+#define IOMUX_GOUT      (IOMUX_PULL_NONE | IOMUX_CMOS_OUTPUT | \
+                         IOMUX_DRIVE_40OHM | IOMUX_SPEED_MEDIUM | \
+                         IOMUX_SLEW_SLOW)
+
+
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
@@ -107,12 +117,15 @@
 int up_memfault(int irq, FAR void *context, FAR void *arg)
 {
 	/* Dump some memory management fault info */
+	gpio_pinset_t w_set;
+	w_set = GPIO_PIN28 | GPIO_PORT1 | GPIO_OUTPUT | IOMUX_GOUT;
+	imxrt_gpio_write(w_set, true);
 
 	(void)irqsave();
-	lldbg("PANIC!!! Memory Management Fault:\n");
+	//lldbg("PANIC!!! Memory Management Fault:\n");
 	mfdbg("  IRQ: %d context: %p\n", irq, regs);
-	lldbg("  CFAULTS: %08x MMFAR: %08x\n",
-		  getreg32(NVIC_CFAULTS), getreg32(NVIC_MEMMANAGE_ADDR));
+	//lldbg("  CFAULTS: %08x MMFAR: %08x\n",
+	//	  getreg32(NVIC_CFAULTS), getreg32(NVIC_MEMMANAGE_ADDR));
 	mfdbg("  BASEPRI: %08x PRIMASK: %08x IPSR: %08x CONTROL: %08x\n",
 		  getbasepri(), getprimask(), getipsr(), getcontrol());
 	mfdbg("  R0: %08x %08x %08x %08x %08x %08x %08x %08x\n",

@@ -47,7 +47,7 @@ static void display_test_scenario(void)
 	printf("\t-Press X or x : Terminate Tests.\n");
 }
 
-extern int preapp_start(int argc, char **argv);
+//extern int preapp_start(int argc, char **argv);
 
 #ifdef CONFIG_APP_BINARY_SEPARATION
 int main(int argc, char **argv)
@@ -58,7 +58,7 @@ int wifiapp_main(int argc, char **argv)
 	char ch;
 	bool is_testing = true;
 
-	//prctl(TC_GPIO_PIN20_CONFIG);
+	prctl(TC_GPIO_PIN20_CONFIG);
 
 #if defined(CONFIG_SYSTEM_PREAPP_INIT) && defined(CONFIG_APP_BINARY_SEPARATION)
 	preapp_start(argc, argv);
@@ -66,57 +66,12 @@ int wifiapp_main(int argc, char **argv)
 
 	printf("This is WIFI App\n");
 
-#ifndef CONFIG_EXAMPLES_MICOM_TIMER_TEST
-#ifdef CONFIG_BINARY_MANAGER
-	int ret;
-	/*ret = binary_manager_notify_binary_started();
-	if (ret < 0) {
-		printf("WIFI notify 'START' state FAIL\n");
-	}*/
-#endif
-
-#if 0
-	while (is_testing) {
-		display_test_scenario();
-		ch = getchar();
-		switch (ch) {
-#ifdef CONFIG_EXAMPLES_MESSAGING_TEST
-		case 'M':
-		case 'm':
-			messaging_test();
-			break;
-#endif
-#ifdef CONFIG_EXAMPLES_RECOVERY_TEST
-		case 'R':
-		case 'r':
-			recovery_test();
-			is_testing = false;
-			break;
-#endif
-#ifdef CONFIG_EXAMPLES_BINARY_UPDATE_TEST
-		case 'U':
-		case 'u':
-			binary_update_test();
-			break;
-#endif
-		case 'X':
-		case 'x':
-			printf("Test will be finished.\n");
-			is_testing = false;
-			break;
-		default:
-			printf("Invalid Scenario.\n");
-			break;
-		}
-	}
-#else
 	recovery_test();
-#endif
-#endif /* CONFIG_EXAMPLES_MICOM_TIMER_TEST */
 
+	volatile uint32_t *addr;
 
 	//addr = (uint32_t *)CONFIG_MPU_TEST_KERNEL_CODE_ADDR;
-	//sleep(1);
+	//sleep(3);
 	//*addr = 0xdeadbeef;
 
 	while (1) {
