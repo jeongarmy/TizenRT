@@ -364,7 +364,7 @@ struct task_group_s {
 	pid_t tg_task;				/* The ID of the task within the group      */
 #endif
 #if defined(CONFIG_BINARY_MANAGER)
-	pid_t tg_binidx;				/* The ID of the main task in binary        */
+	int tg_binidx;				/* The ID of the main task in binary        */
 	pid_t tg_binid;				/* The ID of the main task in binary		*/
 #endif
 

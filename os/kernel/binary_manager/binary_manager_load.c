@@ -50,6 +50,17 @@
 
 #include "binary_manager.h"
 
+
+#include "../../arch/arm/src/imxrt/imxrt_gpio.h"
+#include "../../arch/arm/include/imxrt/imxrt102x_irq.h"
+#include "../../arch/arm/src/imxrt/chip/imxrt102x_pinmux.h"
+
+
+#define IOMUX_GOUT      (IOMUX_PULL_NONE | IOMUX_CMOS_OUTPUT | \
+                         IOMUX_DRIVE_40OHM | IOMUX_SPEED_MEDIUM | \
+                         IOMUX_SLEW_SLOW)
+
+
 extern sq_queue_t g_sem_list;
 
 /****************************************************************************
@@ -355,6 +366,9 @@ static int binary_manager_terminate_binary(int bin_idx)
 	}
 	bmvdbg("Unload binary %s\n", BIN_NAME(bin_idx));
 
+	BIN_RTLIST(bin_idx) = NULL;
+	BIN_NRTLIST(bin_idx) = NULL;
+
 	/* Notify 'Unloaded' state to other binaries */
 	binary_manager_notify_state_changed(bin_idx, BINARY_UNLOADED);
 
@@ -382,22 +396,12 @@ static int binary_manager_reload(int binidx)
 {
 	int ret;
 	int bin_idx;
+	gpio_pinset_t w_set;
+	w_set = GPIO_PIN28 | GPIO_PORT1 | GPIO_OUTPUT | IOMUX_GOUT;
 
-	/* Check whether it is registered in binary manager */
-	/*bin_idx = binary_manager_get_index_with_binid(binid);
-	if (bin_idx < 0) {
-		bmdbg("binary %s is not registered\n", binid);
-		return BINMGR_NOT_FOUND;
-	}*/
+	//imxrt_gpio_write(w_set, true);
+
 	bin_idx = binidx;
-
-#if 0
-	btcb = sched_gettcb(BIN_ID(binidx));
-	if (btcb) {
-		binp = btcb->group->tg_bininfo;
-		binp->reload = true;
-	}
-#endif
 
 	/* Terminate binary */
 	ret = binary_manager_terminate_binary(bin_idx);
@@ -405,6 +409,8 @@ static int binary_manager_reload(int binidx)
 		bmdbg("Failed to terminate binary %s\n", BIN_NAME(bin_idx));
 		return BINMGR_OPERATION_FAIL;
 	}
+	//imxrt_gpio_write(w_set, false);
+	//imxrt_gpio_write(w_set, true);
 
 	/* Load binary */
 	ret = binary_manager_load(bin_idx);
@@ -506,7 +512,6 @@ static int loading_thread(int argc, char *argv[])
 			bmdbg("Invalid arguments for reloading, argc %d\n", argc);
 			break;
 		}
-		lldbg("RELOAD!!!!! %d\n", (int)atoi(argv[2]));
 		/* [2] binary id for reloading */
 		int binid = (int)atoi(argv[2]);
 #ifdef CONFIG_SUPPORT_COMMON_BINARY

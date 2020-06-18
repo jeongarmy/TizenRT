@@ -195,6 +195,7 @@ static pthread_addr_t timer_thread(pthread_addr_t arg)
 #endif
 	while (count--) {
 		fin_wait();
+		prctl(TC_GPIO_PIN27_FALSE);
 	}
 #ifdef CONFIG_EXAMPLES_TIMER_FRT_MEASUREMENT
 	if (ioctl(frt_fd, TCIOC_GETSTATUS, (unsigned long)(uintptr_t)&after) < 0) {

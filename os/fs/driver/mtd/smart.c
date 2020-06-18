@@ -3721,7 +3721,7 @@ retry:
 			}
 #endif
 		} else {
-			fdbg("line %d, block %d, sector %d status: %d committed %d and skipped...\n", __LINE__, allocblock, x, header.status, SECTOR_IS_COMMITTED(header));
+//			fdbg("line %d, block %d, sector %d status: %d committed %d and skipped...\n", __LINE__, allocblock, x, header.status, SECTOR_IS_COMMITTED(header));
 		}
 	}
 

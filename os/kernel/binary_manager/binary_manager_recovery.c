@@ -44,6 +44,17 @@
 #include "sched/sched.h"
 #include "binary_manager.h"
 
+
+#include "../../arch/arm/src/imxrt/imxrt_gpio.h"
+#include "../../arch/arm/include/imxrt/imxrt102x_irq.h"
+#include "../../arch/arm/src/imxrt/chip/imxrt102x_pinmux.h"
+
+
+#define IOMUX_GOUT      (IOMUX_PULL_NONE | IOMUX_CMOS_OUTPUT | \
+                         IOMUX_DRIVE_40OHM | IOMUX_SPEED_MEDIUM | \
+                         IOMUX_SLEW_SLOW)
+
+
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
@@ -144,16 +155,6 @@ static int binary_manager_deactivate_binary(int bin_idx)
 	struct tcb_s *btcb;
 
 	/* Get a tcb of main task */
-#if 0
-	btcb = sched_gettcb(BIN_ID(bin_idx));
-	if (btcb->task_state != TSTATE_TASK_INACTIVE) {
-		/* Recover semaphores, message queue, and watchdog timer resources.*/
-		binary_manager_recover_tcb(btcb);
-		/* Remove the TCB from the task list associated with the state */
-		BM_DEACTIVATE_TASK(btcb);
-	}
-#endif
-
 	ptr = BIN_NRTLIST(bin_idx);
 	while (ptr) {
 		flags = irqsave();
@@ -187,21 +188,9 @@ void binary_manager_deactivate_rtthreads(int bin_idx)
 	struct tcb_s *ptr;
 	struct tcb_s *btcb;
 
-#if 0
-	btcb = sched_gettcb(BIN_ID(bin_idx));
-	if (btcb->sched_priority > BM_PRIORITY_MAX) {
-		/* Recover semaphores, message queue, and watchdog timer resources.*/
-		binary_manager_recover_tcb(btcb);
-		/* Remove the TCB from the task list associated with the state */
-		BM_DEACTIVATE_TASK(btcb);
-	}
-#endif
 	if (bin_idx > 0) {
-		lldbg("RTTHREADS!!!!! %d\n", bin_idx);
 		ptr = BIN_RTLIST(bin_idx);
 		while (ptr) {
-			
-			lldbg("@@@@@ RECOVER %d\n", ptr->pid);
 			/* Recover semaphores, message queue, and watchdog timer resources.*/
 			binary_manager_recover_tcb(ptr);
 			/* Remove the TCB from the task list associated with the state */
@@ -229,7 +218,6 @@ void binary_manager_recover_userfault(uint32_t assert_pc)
 	tcb = this_task();
 	if (tcb != NULL && tcb->group != NULL) {
 		tcb->lockcount = 0;
-		//binid = tcb->group->tg_binid;
 		bin_idx = tcb->group->tg_binidx;
 		/* Exclude realtime task/pthreads from scheduling */
 		binary_manager_deactivate_rtthreads(bin_idx);
@@ -249,7 +237,6 @@ void binary_manager_recover_userfault(uint32_t assert_pc)
 			sq_addlast((sq_entry_t *)msg, (sq_queue_t *)&g_faultmsg_list);
 
 			/* Unblock fault message sender */
-			//up_recovery_unblock(g_faultmsg_sender);
 			if (g_faultmsg_sender->task_state == TSTATE_WAIT_FIN) {
 				up_recovery_task(g_faultmsg_sender);
 			}
@@ -330,6 +317,8 @@ void binary_manager_recovery(int bin_idx)
 	char type_str[1];
 	char data_str[1];
 	char *loading_data[LOADTHD_ARGC + 1];
+	gpio_pinset_t w_set;
+	w_set = GPIO_PIN28 | GPIO_PORT1 | GPIO_OUTPUT | IOMUX_GOUT;
 
 #ifdef CONFIG_SUPPORT_COMMON_BINARY
 	/* binid is zero means a crash happened in common library
@@ -341,7 +330,6 @@ void binary_manager_recovery(int bin_idx)
 			binid = BIN_ID(bin_idx);
 			/* Exclude its all children from scheduling if the binary is registered with the binary manager */
 			ret = binary_manager_deactivate_binary(binid);
-
 			if (ret != OK) {
 				bmlldbg("Failure during recovery excluding binary pid = %d\n", binid);
 				goto reboot_board;
@@ -355,16 +343,8 @@ void binary_manager_recovery(int bin_idx)
 #endif
 
 	bmllvdbg("Try to recover fault with binid %d\n", bin_idx);
-	//imxrt_gpio_write(w_set, true);
 
 	if (bin_idx >= 0) {
-		/* Get binary id of fault task and check it is registered in binary manager */
-		/*bin_idx = binary_manager_get_index_with_binid(binid);
-		if (bin_idx < 0) {
-			bmlldbg("binary pid %d is not registered to binary manager\n", binid);
-			goto reboot_board;
-		}*/
-
 		/* Exclude its all children from scheduling if the binary is registered with the binary manager */
 		ret = binary_manager_deactivate_binary(bin_idx);
 		if (ret == OK) {

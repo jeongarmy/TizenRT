@@ -161,13 +161,17 @@ static void paper_test(void)
 	int pid;
 	int i;
 	pthread_t thd;
-	pthread_attr_t attr;
 
-	pthread_attr_init(&attr);
-	attr.priority = 220;
+	for (i = 0; i < 19; i++) {
+		pid = task_create("rt", 220, 1024, sem_wait_task, (FAR char *const *)NULL);
+		if (pid < 0) {
+			printf("task create FAIL\n");
+			return 0;
+		}
+	}
 
-	for (i = 0; i < 8; i++) {
-		pid = task_create("sem_wait", 220, 1024, sem_wait_task, (FAR char *const *)NULL);
+	for (i = 0; i < 10; i++) {
+		pid = task_create("nrt", 100, 1024, sem_wait_task, (FAR char *const *)NULL);
 		if (pid < 0) {
 			printf("task create FAIL\n");
 			return 0;
@@ -176,121 +180,9 @@ static void paper_test(void)
 
 	//pthread_create(&thd, &attr, (pthread_startroutine_t)assert_thread, (pthread_addr_t)NULL);
 
-	//wait sem
-#if 0
-	for (i = 0; i < 2; i++) {
-		pid = task_create("semwait", 220, 1024, sem_wait_task, (FAR char *const *)NULL);
-		if (pid < 0) {
-			printf("task create FAIL\n");
-			return 0;
-		}
-		pthread_create(&thd, &attr, (pthread_startroutine_t)sem_wait_thread, (pthread_addr_t)NULL);
-		pthread_create(&thd, &attr, (pthread_startroutine_t)sem_wait_thread, (pthread_addr_t)NULL);
-	}
-
-	//wait mqueue
-	for (i = 0; i < 2; i++) {
-		pid = task_create("mqwait", 220, 1024, mq_wait_task, (FAR char *const *)NULL);
-		if (pid < 0) {
-			printf("task create FAIL\n");
-			return 0;
-		}
-		pthread_create(&thd, &attr, (pthread_startroutine_t)mq_wait_thread, (pthread_addr_t)NULL);
-		pthread_create(&thd, &attr, (pthread_startroutine_t)mq_wait_thread, (pthread_addr_t)NULL);
-	}
-
-	//wait signal (include main)
-	pid = task_create("sigwait", 220, 1024, mq_wait_task, (FAR char *const *)NULL);
-	if (pid < 0) {
-		printf("task create FAIL\n");
-		return 0;
-	}
-	for (i = 0; i < 2; i++) {
-		pthread_create(&thd, &attr, (pthread_startroutine_t)normal_thread, (pthread_addr_t)NULL);
-		pthread_create(&thd, &attr, (pthread_startroutine_t)normal_thread, (pthread_addr_t)NULL);
-	}
-#endif
 }
 
 extern int preapp_start(int argc, char **argv);
-
-///////////////////// threads
-static void *assert_thread(void *index)
-{
-	int type;
-	volatile uint32_t *addr;
-
-	addr = (uint32_t *)CONFIG_MPU_TEST_KERNEL_CODE_ADDR;
-	sleep(5);
-	*addr = 0xdeadbeef;
-
-	return 0;
-}
-
-static void *normal_thread(void *index)
-{
-	while (1) {
-		sleep(10);
-	};
-}
-
-static void *sem_wait_thread(void *index)
-{
-	sem_t test_sem;
-
-	sem_init(&test_sem, 0, 0);
-	sem_wait(&test_sem);
-}
-/////////////////////tasks
-
-static int assert_task(int argc, char *argv[])
-{
-	int type;
-	volatile uint32_t *addr;
-
-	addr = (uint32_t *)CONFIG_MPU_TEST_KERNEL_CODE_ADDR;
-	sleep(3);
-	*addr = 0xdeadbeef;
-	//PANIC();
-	return 0;
-}
-
-static int normal_task(int argc, char *argv[])
-{
-	while (1) {
-		sleep(10);
-	};
-}
-
-static int sem_wait_task(int argc, char *argv[])
-{
-	sem_t test_sem;
-
-	sem_init(&test_sem, 0, 0);
-	sem_wait(&test_sem);
-}
-
-static void paper_test(void)
-{
-	int pid;
-	int i;
-	pthread_t thd;
-	pthread_attr_t attr;
-
-	pthread_attr_init(&attr);
-	attr.priority = 220;
-
-	for (i = 0; i < 4; i++) {
-		pid = task_create("sem_wait", 220, 1024, sem_wait_task, (FAR char *const *)NULL);
-		if (pid < 0) {
-			printf("task create FAIL\n");
-			return 0;
-		}
-	}
-}
-
-extern int preapp_start(int argc, char **argv);
-
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -309,20 +201,18 @@ int micomapp_main(int argc, char **argv)
 	//preapp_start(argc, argv);
 #endif
 
-#endif /* CONFIG_EXAMPLES_MICOM_TIMER_TEST */
 	paper_test();
 
 	volatile uint32_t *addr;
 
 	addr = (uint32_t *)CONFIG_MPU_TEST_KERNEL_CODE_ADDR;
-	sleep(1);
-	//*addr = 0xdeadbeef;
-	PANIC();
+	usleep(500000);
+	*addr = 0xdeadbeef;
+
 	while (1) {
 		sleep(10);
 		//printf("[%d] MICOM ALIVE\n", getpid());
 	}
-
 	return 0;
 
 }

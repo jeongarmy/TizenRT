@@ -34,64 +34,6 @@
 #error "Address not defined for MPU test"
 #endif
 
-static void *assert_thread(void *index)
-{
-	int type;
-	volatile uint32_t *addr;
-
-	addr = (uint32_t *)CONFIG_MPU_TEST_KERNEL_CODE_ADDR;
-	sleep(10);
-	*addr = 0xdeadbeef;
-
-	return 0;
-}
-
-///////////////////// threads
-
-static void *normal_thread(void *index)
-{
-	while (1) {
-		sleep(10);
-	};
-
-}
-
-static void *sem_wait_thread(void *index)
-{
-	sem_t test_sem;
-
-	sem_init(&test_sem, 0, 0);
-	sem_wait(&test_sem);
-
-}
-
-static void *mq_wait_thread(void *index)
-{
-	int nbytes;
-	mqd_t mqfd;
-	char mq_name[32];
-	char data[32];
-
-	struct mq_attr attr;
-	attr.mq_maxmsg = 32;
-	attr.mq_msgsize = 16;
-	attr.mq_flags = 0;
-
-	memset(mq_name, 0, 32);
-
-	sprintf(mq_name, "mymqueue%d", getpid());
-	
-	mqfd = mq_open(mq_name, O_RDWR | O_CREAT, 0666, &attr);
-	if (mqfd < 0) {
-		printf("Failed to open message queue\n");
-		return 0;
-	}
-
-	nbytes = mq_receive(mqfd, (char *)data, 32, NULL);
-	if (nbytes <= 0) {
-		printf("Receive ERROR %d, errno %d, retry!\n", nbytes, errno);
-	}
-}
 
 /////////////////////tasks
 
@@ -139,14 +81,6 @@ static int mq_wait_task(int argc, char *argv[])
  
 }
 
-static int sem_wait_task(int argc, char *argv[])
-{
-	sem_t test_sem;
-
-	sem_init(&test_sem, 0, 0);
-	sem_wait(&test_sem);
-}
-
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -155,11 +89,21 @@ void recovery_test(void)
 	int pid;
 	int i;
 
-	for (i = 0; i < 5; i++) {
-		pid = task_create("normal", 100, 1024, sem_wait_task, (FAR char *const *)NULL);
+	/*for (i = 0; i < 5; i++) {
+		pid = task_create("sem_wait", 220, 1024, sem_wait_task, (FAR char *const *)NULL);
 		if (pid < 0) {
 			printf("task create FAIL\n");
 			return 0;
 		}
-	}
+	}*/
+
+/*	for (i = 0; i < 29; i++) {
+		pid = task_create("sem_wait", 100, 1024, sem_wait_task, (FAR char *const *)NULL);
+		if (pid < 0) {
+			printf("task create FAIL\n");
+			return 0;
+		}
+	}*/
+
+	
 }

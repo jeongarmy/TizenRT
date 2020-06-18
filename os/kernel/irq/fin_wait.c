@@ -29,6 +29,16 @@
 #include <tinyara/irq.h>
 #include <tinyara/sched.h>
 
+#include "../../arch/arm/src/imxrt/imxrt_gpio.h"
+#include "../../arch/arm/include/imxrt/imxrt102x_irq.h"
+#include "../../arch/arm/src/imxrt/chip/imxrt102x_pinmux.h"
+
+
+#define IOMUX_GOUT      (IOMUX_PULL_NONE | IOMUX_CMOS_OUTPUT | \
+                         IOMUX_DRIVE_40OHM | IOMUX_SPEED_MEDIUM | \
+                         IOMUX_SLEW_SLOW)
+
+
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
@@ -91,6 +101,10 @@ int fin_wait(void)
 	update_fin_queue(tcb);
 
 	irqrestore(saved_state);
+
+	//gpio_pinset_t w_set;
+	//w_set = GPIO_PIN27 | GPIO_PORT1 | GPIO_OUTPUT | IOMUX_GOUT;
+	//imxrt_gpio_write(w_set, false);
 
 	return ret;
 }

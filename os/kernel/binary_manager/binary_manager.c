@@ -34,6 +34,16 @@
 #include "sched/sched.h"
 #include "binary_manager.h"
 
+#include "../../arch/arm/src/imxrt/imxrt_gpio.h"
+#include "../../arch/arm/include/imxrt/imxrt102x_irq.h"
+#include "../../arch/arm/src/imxrt/chip/imxrt102x_pinmux.h"
+
+
+#define IOMUX_GOUT      (IOMUX_PULL_NONE | IOMUX_CMOS_OUTPUT | \
+                         IOMUX_DRIVE_40OHM | IOMUX_SPEED_MEDIUM | \
+                         IOMUX_SLEW_SLOW)
+
+
 /****************************************************************************
  * Private Definitions
  ****************************************************************************/
@@ -76,6 +86,8 @@ int binary_manager(int argc, char *argv[])
 	struct mq_attr attr;
 	char *loading_data[LOADTHD_ARGC + 1];
 	binmgr_request_t request_msg;
+	gpio_pinset_t w_set;
+	w_set = GPIO_PIN28 | GPIO_PORT1 | GPIO_OUTPUT | IOMUX_GOUT;
 
 	/* Scan user binary files and Register them */
 	binary_manager_scan_ubin();
@@ -134,6 +146,7 @@ int binary_manager(int argc, char *argv[])
 		switch (request_msg.cmd) {
 #ifdef CONFIG_BINMGR_RECOVERY
 		case BINMGR_FAULT:
+			//imxrt_gpio_write(w_set, true);
 			binary_manager_recovery(request_msg.requester_pid);
 			break;
 #endif

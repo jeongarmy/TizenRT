@@ -212,13 +212,8 @@ void up_recovery_task(struct tcb_s *tcb)
 {
 	struct tcb_s *rtcb;
 
-	/* Verify that the context switch can be performed */
-
-	ASSERT((tcb->task_state >= FIRST_BLOCKED_STATE) && (tcb->task_state <= LAST_BLOCKED_STATE));
-
 	/* Remove the task from the blocked task list */
-
-	sched_removeblocked(tcb);
+	dq_rem((FAR dq_entry_t *)tcb, (dq_queue_t *)g_tasklisttable[tcb->task_state].list);
 
 	/* Reset its timeslice.  This is only meaningful for round
 	 * robin tasks but it doesn't here to do it for everything
@@ -232,13 +227,20 @@ void up_recovery_task(struct tcb_s *tcb)
 	 * g_readytorun task list
 	 */
 
-	if (sched_addreadytorun(tcb)) {
-		/* The currently active task has changed! We need to do
-		 * a context switch to the new task.
-		 *
-		 * Are we in an interrupt handler?
-		 */
-	}
+	if (sched_addprioritized(tcb, (FAR dq_queue_t *)&g_readytorun)) {
+	   /* The new btcb was added at the head of the ready-to-run list.	It
+		* is now to new active task!
+		*/
+
+	   ASSERT(tcb->flink != NULL);
+	   tcb->task_state = TSTATE_TASK_RUNNING;
+	   tcb->flink->task_state = TSTATE_TASK_READYTORUN;
+
+   } else {
+	   /* The new btcb was added in the middle of the ready-to-run list */
+
+	   tcb->task_state = TSTATE_TASK_READYTORUN;
+   }
 
 	if (current_regs) {
 		/* Yes, then we have to do things differently.
@@ -267,9 +269,8 @@ void up_recovery_task(struct tcb_s *tcb)
 				up_mpu_set_register(&rtcb->mpu_regs[i]);
 			}
 #endif
-#ifdef CONFIG_MPU_STACK_OVERFLOW_PROTECTION
-			up_mpu_set_register(&rtcb->stack_mpu_regs);
-#endif
+		// up_set_mpu_app_configuration(rtcb);
+
 		}
 #endif
 
@@ -296,7 +297,6 @@ void up_recovery_task(struct tcb_s *tcb)
 		 */
 
 		struct tcb_s *nexttcb = this_task();
-		lldbg("@@@@@ next !!! %d\n", nexttcb->pid);
 #ifdef CONFIG_TASK_SCHED_HISTORY
 		/* Save the task name which will be scheduled */
 		save_task_scheduling_status(nexttcb);
@@ -304,7 +304,6 @@ void up_recovery_task(struct tcb_s *tcb)
 		//up_switchcontext(nexttcb->xcp.regs, nexttcb->xcp.regs);
 
 		up_fullcontextrestore(nexttcb->xcp.regs);
-
 		/* up_switchcontext forces a context switch to the task at the
 		 * head of the ready-to-run list.  It does not 'return' in the
 		 * normal sense.  When it does return, it is because the blocked
@@ -312,3 +311,77 @@ void up_recovery_task(struct tcb_s *tcb)
 		 */
 	}
 }
+
+
+#if 0
+
+void up_recovery_unblock(struct tcb_s *tcb)
+{
+	struct tcb_s *rtcb;
+
+	/* Unblock fault message sender */
+#if CONFIG_RR_INTERVAL > 0
+	tcb->timeslice = MSEC2TICK(CONFIG_RR_INTERVAL);
+#endif
+	dq_rem((FAR dq_entry_t *)tcb, (dq_queue_t *)g_tasklisttable[tcb->task_state].list);
+	if (sched_addprioritized(tcb, (FAR dq_queue_t *)&g_readytorun)) {
+		ASSERT(tcb->flink != NULL);
+		tcb->task_state = TSTATE_TASK_RUNNING;
+		tcb->flink->task_state = TSTATE_TASK_READYTORUN;
+	} else {
+		tcb->task_state = TSTATE_TASK_READYTORUN;
+	}
+
+	/* Restore the exception context of the tcb at the (new) head
+	 * of the g_readytorun task list.
+	 */
+	if (current_regs) {
+		rtcb = this_task();
+#ifdef CONFIG_TASK_SCHED_HISTORY
+		/* Save the task name which will be scheduled */
+		save_task_scheduling_status(rtcb);
+#endif
+		/* Restore the MPU registers in case we are switching to an application task */
+#ifdef CONFIG_ARMV7M_MPU
+	/* Condition check : Update MPU registers only if this is not a kernel thread. */
+	if ((rtcb->flags & TCB_FLAG_TTYPE_MASK) != TCB_FLAG_TTYPE_KERNEL) {
+#if defined(CONFIG_APP_BINARY_SEPARATION)
+		for (int i = 0; i < 3 * MPU_NUM_REGIONS; i += 3) {
+			up_mpu_set_register(&rtcb->mpu_regs[i]);
+		}
+#endif
+#ifdef CONFIG_MPU_STACK_OVERFLOW_PROTECTION
+		up_mpu_set_register(&rtcb->stack_mpu_regs);
+#endif
+	}
+#endif
+
+#ifdef CONFIG_SUPPORT_COMMON_BINARY
+	if (g_umm_app_id) {
+		*g_umm_app_id = rtcb->app_id;
+	}
+#endif
+
+		/* Restore the MPU registers in case we are switching to an application task */
+#ifdef CONFIG_ARMV7M_MPU
+		//up_set_mpu_app_configuration(rtcb);
+#endif
+#ifdef CONFIG_TASK_MONITOR
+		/* Update tcb active flag for monitoring. */
+		rtcb->is_active = true;
+#endif
+		/* Then switch contexts */
+		up_restorestate(rtcb->xcp.regs);
+	} else {
+		struct tcb_s *nexttcb = this_task();
+#ifdef CONFIG_TASK_SCHED_HISTORY
+		/* Save the task name which will be scheduled */
+		save_task_scheduling_status(nexttcb);
+#endif
+		//up_switchcontext(nexttcb->xcp.regs, nexttcb->xcp.regs);
+
+		up_fullcontextrestore(nexttcb->xcp.regs);
+	}
+}
+
+#endif

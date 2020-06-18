@@ -73,6 +73,16 @@
 #include <tinyara/kmalloc.h>
 #include <tinyara/timer.h>
 
+#include "../arch/arm/src/imxrt/imxrt_gpio.h"
+#include "../arch/arm/include/imxrt/imxrt102x_irq.h"
+#include "../arch/arm/src/imxrt/chip/imxrt102x_pinmux.h"
+
+
+#define IOMUX_GOUT      (IOMUX_PULL_NONE | IOMUX_CMOS_OUTPUT | \
+                         IOMUX_DRIVE_40OHM | IOMUX_SPEED_MEDIUM | \
+                         IOMUX_SLEW_SLOW)
+
+
 #ifdef CONFIG_TIMER
 
 /****************************************************************************
@@ -150,17 +160,21 @@ static bool timer_notifier(FAR uint32_t *next_interval_us, FAR void *arg)
 #ifdef CONFIG_CAN_PASS_STRUCTS
 	union sigval value;
 #endif
+	gpio_pinset_t w_set;
+	w_set = GPIO_PIN27 | GPIO_PORT1 | GPIO_OUTPUT | IOMUX_GOUT;
+	imxrt_gpio_write(w_set, true);
 
 	DEBUGASSERT(upper != NULL);
 
 	/* Signal the waiter.. if there is one */
 
 #ifdef CONFIG_CAN_PASS_STRUCTS
-	value.sival_ptr = upper->arg;
-	(void)sigqueue(upper->pid, upper->signo, value);
+	//value.sival_ptr = upper->arg;
+	//(void)sigqueue(upper->pid, upper->signo, value);
 #else
-	(void)sigqueue(upper->pid, upper->signo, upper->arg);
+	//(void)sigqueue(upper->pid, upper->signo, upper->arg);
 #endif
+	fin_notify(upper->pid, 0);
 
 	return true;
 }

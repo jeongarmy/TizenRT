@@ -70,6 +70,15 @@
 #include "task/task.h"
 #endif
 
+#include "../../arch/arm/src/imxrt/imxrt_gpio.h"
+#include "../../arch/arm/include/imxrt/imxrt102x_irq.h"
+#include "../../arch/arm/src/imxrt/chip/imxrt102x_pinmux.h"
+
+
+#define IOMUX_GOUT      (IOMUX_PULL_NONE | IOMUX_CMOS_OUTPUT | \
+                         IOMUX_DRIVE_40OHM | IOMUX_SPEED_MEDIUM | \
+                         IOMUX_SLEW_SLOW)
+
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
@@ -120,6 +129,9 @@ int task_activate(FAR struct tcb_s *tcb)
 	int ret;
 	struct sigaction act;
 
+	gpio_pinset_t w_set;
+	w_set = GPIO_PIN27 | GPIO_PORT1 | GPIO_OUTPUT | IOMUX_GOUT;
+
 	act.sa_sigaction = (_sa_sigaction_t)thread_termination_handler;
 	act.sa_flags = 0;
 	(void)sigemptyset(&act.sa_mask);
@@ -142,9 +154,9 @@ int task_activate(FAR struct tcb_s *tcb)
 	}
 #endif
 
-	//if (tcb->group && tcb->pid == tcb->group->tg_binid) {
+	if (tcb->group && tcb->pid == tcb->group->tg_binid) {
 		//imxrt_gpio_write(w_set, false);
-	//}
+	}
 	up_unblock_task(tcb);
 	irqrestore(flags);
 	return OK;
