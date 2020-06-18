@@ -141,6 +141,10 @@ int task_activate(FAR struct tcb_s *tcb)
 		heap->alloc_list[hash_pid].num_alloc_free = 0;
 	}
 #endif
+
+	//if (tcb->group && tcb->pid == tcb->group->tg_binid) {
+		//imxrt_gpio_write(w_set, false);
+	//}
 	up_unblock_task(tcb);
 	irqrestore(flags);
 	return OK;

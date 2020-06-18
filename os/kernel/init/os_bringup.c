@@ -254,7 +254,7 @@ static inline void os_do_appstart(void)
 #endif
 
 #ifdef CONFIG_SE
-	se_initialize();
+	//se_initialize();
 #endif
 
 #ifdef CONFIG_IOTDEV

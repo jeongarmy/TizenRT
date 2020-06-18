@@ -58,6 +58,8 @@ int wifiapp_main(int argc, char **argv)
 	char ch;
 	bool is_testing = true;
 
+	//prctl(TC_GPIO_PIN20_CONFIG);
+
 #if defined(CONFIG_SYSTEM_PREAPP_INIT) && defined(CONFIG_APP_BINARY_SEPARATION)
 	preapp_start(argc, argv);
 #endif
@@ -67,13 +69,13 @@ int wifiapp_main(int argc, char **argv)
 #ifndef CONFIG_EXAMPLES_MICOM_TIMER_TEST
 #ifdef CONFIG_BINARY_MANAGER
 	int ret;
-	ret = binary_manager_notify_binary_started();
+	/*ret = binary_manager_notify_binary_started();
 	if (ret < 0) {
 		printf("WIFI notify 'START' state FAIL\n");
-	}
+	}*/
 #endif
 
-#ifndef CONFIG_ENABLE_RECOVERY_AGING_TEST
+#if 0
 	while (is_testing) {
 		display_test_scenario();
 		ch = getchar();
@@ -110,8 +112,13 @@ int wifiapp_main(int argc, char **argv)
 #else
 	recovery_test();
 #endif
-
 #endif /* CONFIG_EXAMPLES_MICOM_TIMER_TEST */
+
+
+	//addr = (uint32_t *)CONFIG_MPU_TEST_KERNEL_CODE_ADDR;
+	//sleep(1);
+	//*addr = 0xdeadbeef;
+
 	while (1) {
 		sleep(10);
 		printf("[%d] WIFI ALIVE\n", getpid());

@@ -124,11 +124,11 @@ typedef struct faultmsg_s faultmsg_t;
 struct binmgr_uinfo_s {
 	pid_t bin_id;
 	uint8_t state;
-	uint8_t rttype;
-	uint8_t rtcount;
 	load_attr_t load_attr;
 	char bin_ver[BIN_VER_MAX];
 	char kernel_ver[KERNEL_VER_MAX];
+	struct tcb_s *rt_list;
+	struct tcb_s *nrt_list;
 	sq_queue_t cb_list; // list node type : statecb_node_t
 #ifdef CONFIG_OPTIMIZE_APP_RELOAD_TIME
 	struct binary_s *binp;
@@ -156,8 +156,8 @@ typedef struct statecb_node_s statecb_node_t;
 binmgr_uinfo_t *binary_manager_get_udata(uint32_t bin_idx);
 #define BIN_ID(bin_idx)                                 binary_manager_get_udata(bin_idx)->bin_id
 #define BIN_STATE(bin_idx)                              binary_manager_get_udata(bin_idx)->state
-#define BIN_RTTYPE(bin_idx)                             binary_manager_get_udata(bin_idx)->rttype
-#define BIN_RTCOUNT(bin_idx)                            binary_manager_get_udata(bin_idx)->rtcount
+#define BIN_RTLIST(bin_idx)                             binary_manager_get_udata(bin_idx)->rt_list
+#define BIN_NRTLIST(bin_idx)                            binary_manager_get_udata(bin_idx)->nrt_list
 
 #define BIN_VER(bin_idx)                                binary_manager_get_udata(bin_idx)->bin_ver
 #define BIN_KERNEL_VER(bin_idx)                         binary_manager_get_udata(bin_idx)->kernel_ver
@@ -197,7 +197,7 @@ binmgr_uinfo_t *binary_manager_get_udata(uint32_t bin_idx);
  *
  ****************************************************************************/
 void binary_manager_recovery(int pid);
-void binary_manager_deactivate_rtthreads(struct tcb_s *tcb);
+void binary_manager_deactivate_rtthreads(int bin_idx);
 void binary_manager_set_faultmsg_sender(pid_t pid);
 int binary_manager_faultmsg_sender(int argc, char *argv[]);
 mqd_t binary_manager_get_mqfd(void);

@@ -80,6 +80,7 @@ static int assert_group_main_task(int argc, char *argv[])
 	for (count = 0; count < 2; count++) {
 		pthread_create(&thd, &attr, (pthread_startroutine_t)normal_thread, (pthread_addr_t)count);
 	}
+	attr.priority = 220;
 	pthread_create(&thd, &attr, (pthread_startroutine_t)assert_thread, (pthread_addr_t)count);
 
 	while (1);
@@ -96,28 +97,45 @@ static int normal_task(int argc, char *argv[])
 	return 0;
 }
 
+static int sem_wait_task(int argc, char *argv[])
+{
+	sem_t test_sem;
+
+	sem_init(&test_sem, 0, 0);
+	sem_wait(&test_sem);
+}
+
 static int make_children_task(int argc, char *argv[])
 {
 	int pid;
+	int i;
 
 	printf("[%d] make_children_task \n", getpid());
 
-	pid = task_create("normal", 100, 1024, normal_task, (FAR char *const *)NULL);
-	if (pid < 0) {
-		printf("task create FAIL\n");
-		return 0;
-	}
 
-	pid = task_create("assert_group_main", 100, 1024, assert_group_main_task, (FAR char *const *)NULL);
+/*	pid = task_create("assert_group_main", 100, 1024, assert_group_main_task, (FAR char *const *)NULL);
 	if (pid < 0) {
 		printf("task create FAIL\n");
 		return 0;
-	}
+	}*/
 
 	while (1);
 
 	return 0;
 }
+
+static int assert_task(int argc, char *argv[])
+{
+	int type;
+	volatile uint32_t *addr;
+
+	addr = (uint32_t *)CONFIG_MPU_TEST_KERNEL_CODE_ADDR;
+	sleep(3);
+	*addr = 0xdeadbeef;
+	//PANIC();
+	return 0;
+}
+
 
 /****************************************************************************
  * Public Functions
@@ -126,11 +144,13 @@ static int make_children_task(int argc, char *argv[])
 void recovery_test(void)
 {
 	int pid;
+	int i;
 
-	pid = task_create("mkchildren", 100, 1024, make_children_task, (FAR char *const *)NULL);
-	if (pid < 0) {
-		printf("task create FAIL\n");
-		return;
+	for (i = 0; i < 5; i++) {
+		pid = task_create("normal", 100, 1024, sem_wait_task, (FAR char *const *)NULL);
+		if (pid < 0) {
+			printf("task create FAIL\n");
+			return 0;
+		}
 	}
-	printf("I'm RECOVERY main! create mkchildren task %d\n", pid);
 }

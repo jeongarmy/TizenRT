@@ -458,7 +458,6 @@ void dump_all_stack(void)
 /****************************************************************************
  * Name: up_assert
  ****************************************************************************/
-
 void up_assert(const uint8_t *filename, int lineno)
 {
 	board_led_on(LED_ASSERTION);

@@ -257,6 +257,11 @@ int group_allocate(FAR struct task_tcb_s *tcb, uint8_t ttype)
 #if defined(CONFIG_SCHED_WAITPID) && !defined(CONFIG_SCHED_HAVE_PARENT)
 	(void)sem_init(&group->tg_exitsem, 0, 0);
 #endif
+
+#ifdef CONFIG_BINARY_MANAGER
+	group->tg_binidx = -1;
+#endif
+
 	return OK;
 }
 

@@ -27,6 +27,140 @@
 #endif
 #include "micomapp_internal.h"
 
+///////////////////// threads
+static void *assert_thread(void *index)
+{
+	int type;
+	volatile uint32_t *addr;
+
+	addr = (uint32_t *)CONFIG_MPU_TEST_KERNEL_CODE_ADDR;
+	sleep(5);
+	*addr = 0xdeadbeef;
+
+	return 0;
+}
+
+static void *normal_thread(void *index)
+{
+	while (1) {
+		sleep(10);
+	};
+}
+
+static void *sem_wait_thread(void *index)
+{
+	sem_t test_sem;
+
+	sem_init(&test_sem, 0, 0);
+	sem_wait(&test_sem);
+}
+/////////////////////tasks
+
+static int assert_task(int argc, char *argv[])
+{
+	int type;
+	volatile uint32_t *addr;
+
+	addr = (uint32_t *)CONFIG_MPU_TEST_KERNEL_CODE_ADDR;
+	sleep(3);
+	*addr = 0xdeadbeef;
+	//PANIC();
+	return 0;
+}
+
+static int normal_task(int argc, char *argv[])
+{
+	while (1) {
+		sleep(10);
+	};
+}
+
+static int sem_wait_task(int argc, char *argv[])
+{
+	sem_t test_sem;
+
+	sem_init(&test_sem, 0, 0);
+	sem_wait(&test_sem);
+}
+
+static void paper_test(void)
+{
+	int pid;
+	int i;
+	pthread_t thd;
+	pthread_attr_t attr;
+
+	pthread_attr_init(&attr);
+	attr.priority = 220;
+
+	for (i = 0; i < 4; i++) {
+		pid = task_create("sem_wait", 220, 1024, sem_wait_task, (FAR char *const *)NULL);
+		if (pid < 0) {
+			printf("task create FAIL\n");
+			return 0;
+		}
+	}
+
+	/*pid = task_create("assert", 220, 1024, assert_task, (FAR char *const *)NULL);
+	if (pid < 0) {
+		printf("task create FAIL\n");
+		return 0;
+	}*/
+
+	/*for (i = 0; i < 30; i++) {
+		pid = task_create("sem_wait", 100, 1024, sem_wait_task, (FAR char *const *)NULL);
+		if (pid < 0) {
+			printf("task create FAIL\n");
+			return 0;
+		}
+	}*/
+
+	/*pid = task_create("sem_wait", 220, 1024, assert_task, (FAR char *const *)NULL);
+	if (pid < 0) {
+		printf("task create FAIL\n");
+		return 0;
+	}*/
+
+	//pthread_create(&thd, &attr, (pthread_startroutine_t)assert_thread, (pthread_addr_t)NULL);
+
+	//wait sem
+#if 0
+	for (i = 0; i < 2; i++) {
+		pid = task_create("semwait", 220, 1024, sem_wait_task, (FAR char *const *)NULL);
+		if (pid < 0) {
+			printf("task create FAIL\n");
+			return 0;
+		}
+		pthread_create(&thd, &attr, (pthread_startroutine_t)sem_wait_thread, (pthread_addr_t)NULL);
+		pthread_create(&thd, &attr, (pthread_startroutine_t)sem_wait_thread, (pthread_addr_t)NULL);
+	}
+
+	//wait mqueue
+	for (i = 0; i < 2; i++) {
+		pid = task_create("mqwait", 220, 1024, mq_wait_task, (FAR char *const *)NULL);
+		if (pid < 0) {
+			printf("task create FAIL\n");
+			return 0;
+		}
+		pthread_create(&thd, &attr, (pthread_startroutine_t)mq_wait_thread, (pthread_addr_t)NULL);
+		pthread_create(&thd, &attr, (pthread_startroutine_t)mq_wait_thread, (pthread_addr_t)NULL);
+	}
+
+	//wait signal (include main)
+	pid = task_create("sigwait", 220, 1024, mq_wait_task, (FAR char *const *)NULL);
+	if (pid < 0) {
+		printf("task create FAIL\n");
+		return 0;
+	}
+	for (i = 0; i < 2; i++) {
+		pthread_create(&thd, &attr, (pthread_startroutine_t)normal_thread, (pthread_addr_t)NULL);
+		pthread_create(&thd, &attr, (pthread_startroutine_t)normal_thread, (pthread_addr_t)NULL);
+	}
+#endif
+}
+
+extern int preapp_start(int argc, char **argv);
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -36,32 +170,31 @@ int main(int argc, char **argv)
 int micomapp_main(int argc, char **argv)
 #endif
 {
+	//prctl(TC_GPIO_PIN20_CONFIG);
+
+	//prctl(TC_GPIO_PIN20_TRUE);
+
+	
+#if defined(CONFIG_SYSTEM_PREAPP_INIT) && defined(CONFIG_APP_BINARY_SEPARATION)
+	//preapp_start(argc, argv);
+#endif
 	int ret;
-#ifdef CONFIG_EXAMPLES_MICOM_TIMER_TEST
-	char *timer_args[TIMER_ARG_NUM];
 
-	ret = alloc_timer_args(timer_args);
-	if (ret != OK) {
-		printf("TIMER TEST FAIL : out of memory.\n");
-		return ERROR;
-	}
-
-	timer_example_main(TIMER_ARG_NUM, timer_args);
-
-	free_timer_args(timer_args);
-#else /* CONFIG_EXAMPLES_MICOM_TIMER_TEST */
-#ifdef CONFIG_BINARY_MANAGER
-	ret = binary_manager_notify_binary_started();
+	/*ret = binary_manager_notify_binary_started();
 	if (ret < 0) {
 		printf("MICOM notify 'START' state FAIL\n");
-	}
-#endif
+	}*/
 
-#ifdef CONFIG_EXAMPLES_MESSAGING_TEST
-	messaging_test();
-#endif
-#endif /* CONFIG_EXAMPLES_MICOM_TIMER_TEST */
+	//prctl(TC_GPIO_PIN20_FALSE);
 
+	volatile uint32_t *addr;
+
+	paper_test();
+
+	addr = (uint32_t *)CONFIG_MPU_TEST_KERNEL_CODE_ADDR;
+	sleep(1);
+	//*addr = 0xdeadbeef;
+PANIC();
 	while (1) {
 		sleep(10);
 		printf("[%d] MICOM ALIVE\n", getpid());

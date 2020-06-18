@@ -67,7 +67,6 @@ int fin_wait(void)
 	int ret = NO_FIN_DATA;
 	int saved_state;
 	struct tcb_s *tcb;
-
 	saved_state = irqsave();
 
 	tcb = sched_self();

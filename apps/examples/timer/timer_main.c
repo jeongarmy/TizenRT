@@ -194,7 +194,7 @@ static pthread_addr_t timer_thread(pthread_addr_t arg)
 
 #endif
 	while (count--) {
-		sigwaitinfo(&sig_set, NULL);
+		fin_wait();
 	}
 #ifdef CONFIG_EXAMPLES_TIMER_FRT_MEASUREMENT
 	if (ioctl(frt_fd, TCIOC_GETSTATUS, (unsigned long)(uintptr_t)&after) < 0) {

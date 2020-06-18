@@ -312,15 +312,32 @@ static int binary_manager_terminate_binary(int bin_idx)
 	}
 
 	/* Terminate all children created by a binary */
-	ntcb = tcb = btcb->bin_flink;
+	ntcb = tcb = BIN_RTLIST(bin_idx);
 	while (tcb) {
 		ntcb = tcb->bin_flink;
 		if (need_recovery) {
 			task_recover(tcb);
 		}
-		ret = task_terminate_unloaded(tcb);
-		if (ret < 0) {
-			bmdbg("Failed to terminate task of binary %d\n", binid);
+		if (tcb != btcb) {
+			ret = task_terminate_unloaded(tcb);
+			if (ret < 0) {
+				bmdbg("Failed to terminate task of binary %d\n", binid);
+			}
+		}
+		tcb = ntcb;
+	}
+
+	ntcb = tcb = BIN_NRTLIST(bin_idx);
+	while (tcb) {
+		ntcb = tcb->bin_flink;
+		if (need_recovery) {
+			task_recover(tcb);
+		}
+		if (tcb != btcb) {
+			ret = task_terminate_unloaded(tcb);
+			if (ret < 0) {
+				bmdbg("Failed to terminate task of binary %d\n", binid);
+			}
 		}
 		tcb = ntcb;
 	}
@@ -361,17 +378,26 @@ static int binary_manager_terminate_binary(int bin_idx)
  *   None
  *
  ****************************************************************************/
-static int binary_manager_reload(int binid)
+static int binary_manager_reload(int binidx)
 {
 	int ret;
 	int bin_idx;
 
 	/* Check whether it is registered in binary manager */
-	bin_idx = binary_manager_get_index_with_binid(binid);
+	/*bin_idx = binary_manager_get_index_with_binid(binid);
 	if (bin_idx < 0) {
 		bmdbg("binary %s is not registered\n", binid);
 		return BINMGR_NOT_FOUND;
+	}*/
+	bin_idx = binidx;
+
+#if 0
+	btcb = sched_gettcb(BIN_ID(binidx));
+	if (btcb) {
+		binp = btcb->group->tg_bininfo;
+		binp->reload = true;
 	}
+#endif
 
 	/* Terminate binary */
 	ret = binary_manager_terminate_binary(bin_idx);
@@ -480,6 +506,7 @@ static int loading_thread(int argc, char *argv[])
 			bmdbg("Invalid arguments for reloading, argc %d\n", argc);
 			break;
 		}
+		lldbg("RELOAD!!!!! %d\n", (int)atoi(argv[2]));
 		/* [2] binary id for reloading */
 		int binid = (int)atoi(argv[2]);
 #ifdef CONFIG_SUPPORT_COMMON_BINARY
