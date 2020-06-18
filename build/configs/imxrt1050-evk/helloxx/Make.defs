@@ -193,3 +193,11 @@ HOSTLDFLAGS =
 define DOWNLOAD
   $(TOPDIR)/../build/configs/$(CONFIG_ARCH_BOARD)/$(CONFIG_ARCH_BOARD)_download.sh $(1) $(2) $(3) $(4) $(5) $(6)
 endef
+<<<<<<< HEAD:build/configs/imxrt1050-evk/helloxx/Make.defs
+=======
+
+define MAKE_BOARD_SPECIFIC_BIN
+  $(TOPDIR)/../build/configs/$(CONFIG_ARCH_BOARD)/$(CONFIG_ARCH_BOARD)_make_bin.sh
+endef
+
+>>>>>>> parent of 853bf75... configs/imxrt10x0-evk: remove unnecessary files and a definition:build/configs/imxrt1050-evk/nxp_demo_protected/Make.defs
