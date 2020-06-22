@@ -97,13 +97,11 @@ void recovery_test(void)
 		}
 	}*/
 
-/*	for (i = 0; i < 29; i++) {
-		pid = task_create("sem_wait", 100, 1024, sem_wait_task, (FAR char *const *)NULL);
+	for (i = 0; i < 30; i++) {
+		pid = task_create("sem_wait", 100, 512, sem_wait_task, (FAR char *const *)NULL);
 		if (pid < 0) {
 			printf("task create FAIL\n");
 			return 0;
 		}
-	}*/
-
-	
+	}
 }

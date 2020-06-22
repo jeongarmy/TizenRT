@@ -64,14 +64,14 @@ int wifiapp_main(int argc, char **argv)
 	preapp_start(argc, argv);
 #endif
 
-	printf("This is WIFI App\n");
+	//printf("This is WIFI App\n");
 
 	recovery_test();
 
 	volatile uint32_t *addr;
 
 	//addr = (uint32_t *)CONFIG_MPU_TEST_KERNEL_CODE_ADDR;
-	//sleep(3);
+	//usleep(300000);
 	//*addr = 0xdeadbeef;
 
 	while (1) {

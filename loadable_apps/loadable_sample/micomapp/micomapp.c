@@ -162,7 +162,7 @@ static void paper_test(void)
 	int i;
 	pthread_t thd;
 
-	for (i = 0; i < 19; i++) {
+	for (i = 0; i < 4; i++) {
 		pid = task_create("rt", 220, 1024, sem_wait_task, (FAR char *const *)NULL);
 		if (pid < 0) {
 			printf("task create FAIL\n");
@@ -170,8 +170,8 @@ static void paper_test(void)
 		}
 	}
 
-	for (i = 0; i < 10; i++) {
-		pid = task_create("nrt", 100, 1024, sem_wait_task, (FAR char *const *)NULL);
+	for (i = 0; i < 30; i++) {
+		pid = task_create("nrt", 100, 512, sem_wait_task, (FAR char *const *)NULL);
 		if (pid < 0) {
 			printf("task create FAIL\n");
 			return 0;
@@ -206,7 +206,7 @@ int micomapp_main(int argc, char **argv)
 	volatile uint32_t *addr;
 
 	addr = (uint32_t *)CONFIG_MPU_TEST_KERNEL_CODE_ADDR;
-	usleep(500000);
+	usleep(300000);
 	*addr = 0xdeadbeef;
 
 	while (1) {
