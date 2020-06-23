@@ -399,7 +399,7 @@ static int binary_manager_reload(int binidx)
 	gpio_pinset_t w_set;
 	w_set = GPIO_PIN28 | GPIO_PORT1 | GPIO_OUTPUT | IOMUX_GOUT;
 
-	//imxrt_gpio_write(w_set, true);
+	imxrt_gpio_write(w_set, true);
 
 	bin_idx = binidx;
 
@@ -409,8 +409,8 @@ static int binary_manager_reload(int binidx)
 		bmdbg("Failed to terminate binary %s\n", BIN_NAME(bin_idx));
 		return BINMGR_OPERATION_FAIL;
 	}
-	//imxrt_gpio_write(w_set, false);
-	//imxrt_gpio_write(w_set, true);
+	imxrt_gpio_write(w_set, false);
+	imxrt_gpio_write(w_set, true);
 
 	/* Load binary */
 	ret = binary_manager_load(bin_idx);

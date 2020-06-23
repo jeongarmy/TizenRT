@@ -157,6 +157,10 @@ void _exit(int status)
 	/* Disable interrupts.  They will be restored when the next
 	 * task is started.
 	 */
+	gpio_pinset_t w_set;
+	w_set = GPIO_PIN28 | GPIO_PORT1 | GPIO_OUTPUT | IOMUX_GOUT;
+	
+	imxrt_gpio_write(w_set, true);
 
 	(void)irqsave();
 
@@ -193,6 +197,7 @@ void _exit(int status)
 #endif
 
 	/* Then switch contexts */
+	imxrt_gpio_write(w_set, false);
 
 	up_fullcontextrestore(tcb->xcp.regs);
 }

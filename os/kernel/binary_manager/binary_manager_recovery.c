@@ -357,7 +357,7 @@ void binary_manager_recovery(int bin_idx)
 			ret = binary_manager_loading(loading_data);
 			if (ret > 0) {
 				abort_mode = false;
-				//imxrt_gpio_write(w_set, false);
+				imxrt_gpio_write(w_set, false);
 				bmllvdbg("Loading thread with pid %d will reload binaries!\n", ret);
 				return;
 			}

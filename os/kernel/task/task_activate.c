@@ -130,7 +130,7 @@ int task_activate(FAR struct tcb_s *tcb)
 	struct sigaction act;
 
 	gpio_pinset_t w_set;
-	w_set = GPIO_PIN27 | GPIO_PORT1 | GPIO_OUTPUT | IOMUX_GOUT;
+	w_set = GPIO_PIN28 | GPIO_PORT1 | GPIO_OUTPUT | IOMUX_GOUT;
 
 	act.sa_sigaction = (_sa_sigaction_t)thread_termination_handler;
 	act.sa_flags = 0;
@@ -155,7 +155,7 @@ int task_activate(FAR struct tcb_s *tcb)
 #endif
 
 	if (tcb->group && tcb->pid == tcb->group->tg_binid) {
-		//imxrt_gpio_write(w_set, false);
+		imxrt_gpio_write(w_set, false);
 	}
 	up_unblock_task(tcb);
 	irqrestore(flags);

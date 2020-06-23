@@ -90,6 +90,10 @@ int load_binary(int binary_idx, FAR const char *filename, load_attr_t *load_attr
 #if (defined(CONFIG_SUPPORT_COMMON_BINARY) && (defined(CONFIG_ARMV7M_MPU) || defined(CONFIG_ARMV8M_MPU)))
 	uint32_t com_bin_mpu_regs[3 * MPU_NUM_REGIONS];	/* We need 3 register values to configure each MPU region */
 #endif
+	gpio_pinset_t w_set;
+	w_set = GPIO_PIN28 | GPIO_PORT1 | GPIO_OUTPUT | IOMUX_GOUT;
+
+	imxrt_gpio_write(w_set, true);
 
 	/* Sanity check */
 	if (load_attr && load_attr->bin_size <= 0) {
@@ -213,6 +217,9 @@ int load_binary(int binary_idx, FAR const char *filename, load_attr_t *load_attr
 	uint32_t *heap_table = (uint32_t *)(g_lib_binp->alloc[ALLOC_DATA] + 4);
 	heap_table[binary_idx] = bin->heapstart;
 #endif
+
+	imxrt_gpio_write(w_set, false);
+	imxrt_gpio_write(w_set, true);
 
 	/* Start the module */
 	pid = exec_module(bin);
