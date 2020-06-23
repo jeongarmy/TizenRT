@@ -146,7 +146,7 @@ int binary_manager(int argc, char *argv[])
 		switch (request_msg.cmd) {
 #ifdef CONFIG_BINMGR_RECOVERY
 		case BINMGR_FAULT:
-			//imxrt_gpio_write(w_set, true);
+			imxrt_gpio_write(w_set, true);
 			binary_manager_recovery(request_msg.requester_pid);
 			break;
 #endif

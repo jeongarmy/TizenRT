@@ -201,7 +201,7 @@ int sigtimedwait(FAR const sigset_t *set, FAR struct siginfo *info, FAR const st
 	/* sigtimedwait() is a cancellation point */
 	(void)enter_cancellation_point();
 
-	sched_lock();				/* Not necessary */
+	//sched_lock();				/* Not necessary */
 
 	/* Several operations must be performed below:  We must determine if any
 	 * signal is pending and, if not, wait for the signal.  Since signals can
@@ -353,7 +353,7 @@ int sigtimedwait(FAR const sigset_t *set, FAR struct siginfo *info, FAR const st
 		irqrestore(saved_state);
 	}
 
-	sched_unlock();
+	//sched_unlock();
 	leave_cancellation_point();
 	return ret;
 }

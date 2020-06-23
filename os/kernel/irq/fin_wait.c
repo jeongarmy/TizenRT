@@ -78,6 +78,8 @@ int fin_wait(void)
 	int saved_state;
 	struct tcb_s *tcb;
 	saved_state = irqsave();
+	gpio_pinset_t w_set;
+	w_set = GPIO_PIN27 | GPIO_PORT1 | GPIO_OUTPUT | IOMUX_GOUT;
 
 	tcb = sched_self();
 	DEBUGASSERT(tcb);
@@ -89,6 +91,8 @@ int fin_wait(void)
 		/* If there is second pending irq, update the irq data. */
 		update_fin_queue(tcb);
 		irqrestore(saved_state);
+		//imxrt_gpio_write(w_set, true);
+		//imxrt_gpio_write(w_set, false);
 		return ret;
 	}
 
@@ -102,8 +106,7 @@ int fin_wait(void)
 
 	irqrestore(saved_state);
 
-	//gpio_pinset_t w_set;
-	//w_set = GPIO_PIN27 | GPIO_PORT1 | GPIO_OUTPUT | IOMUX_GOUT;
+	//imxrt_gpio_write(w_set, true);
 	//imxrt_gpio_write(w_set, false);
 
 	return ret;

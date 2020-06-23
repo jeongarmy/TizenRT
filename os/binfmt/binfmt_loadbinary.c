@@ -46,6 +46,17 @@
 
 #include <tinyara/mm/mm.h>
 
+
+#include "../arch/arm/src/imxrt/imxrt_gpio.h"
+#include "../arch/arm/include/imxrt/imxrt102x_irq.h"
+#include "../arch/arm/src/imxrt/chip/imxrt102x_pinmux.h"
+
+
+#define IOMUX_GOUT      (IOMUX_PULL_NONE | IOMUX_CMOS_OUTPUT | \
+                         IOMUX_DRIVE_40OHM | IOMUX_SPEED_MEDIUM | \
+                         IOMUX_SLEW_SLOW)
+
+
 #ifdef CONFIG_SUPPORT_COMMON_BINARY
 #include <tinyara/userspace.h>
 struct binary_s *g_lib_binp;
@@ -93,7 +104,7 @@ int load_binary(int binary_idx, FAR const char *filename, load_attr_t *load_attr
 	gpio_pinset_t w_set;
 	w_set = GPIO_PIN28 | GPIO_PORT1 | GPIO_OUTPUT | IOMUX_GOUT;
 
-	imxrt_gpio_write(w_set, true);
+	//imxrt_gpio_write(w_set, true);
 
 	/* Sanity check */
 	if (load_attr && load_attr->bin_size <= 0) {

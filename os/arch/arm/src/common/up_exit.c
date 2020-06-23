@@ -73,6 +73,16 @@
 #include <tinyara/debug/sysdbg.h>
 #endif
 
+#include "../../src/imxrt/imxrt_gpio.h"
+#include "../../include/imxrt/imxrt102x_irq.h"
+#include "../../src/imxrt/chip/imxrt102x_pinmux.h"
+
+
+#define IOMUX_GOUT      (IOMUX_PULL_NONE | IOMUX_CMOS_OUTPUT | \
+                         IOMUX_DRIVE_40OHM | IOMUX_SPEED_MEDIUM | \
+                         IOMUX_SLEW_SLOW)
+
+
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
@@ -162,14 +172,14 @@ void _exit(int status)
 	
 	imxrt_gpio_write(w_set, true);
 
-	(void)irqsave();
-
 	sllvdbg("TCB=%p exiting\n", this_task());
 
 #if defined(CONFIG_DUMP_ON_EXIT) && defined(CONFIG_DEBUG)
 	sllvdbg("Other tasks:\n");
 	sched_foreach(_up_dumponexit, NULL);
 #endif
+
+	(void)irqsave();
 
 	/* Destroy the task at the head of the ready to run list. */
 
