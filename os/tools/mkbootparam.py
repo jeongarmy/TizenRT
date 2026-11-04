@@ -50,10 +50,10 @@ SIZE_OF_BP_PARTITION = SIZE_OF_BPx * 2
 # | App Count | App1 Name  | App1 Active Idx | App2 Name  | App2 Active Idx |     App# ...   |
 # |  (1byte)  | (16 bytes) |   (1 bytes)     | (16 bytes) |    (1 bytes)    |  (## bytes)    |
 # --------------------------------------------------------------------------------------------
-# -------------------------------------------------------------------------------+
-# | Resource Active Idx |              Reserved               | BP Update Reason |
-# |       (1 byte)      |       ... to fixed bp tail          |      (1 byte)    |
-# -------------------------------------------------------------------------------+
+# ----------------------------------------------------------------------------------+
+# | Resource Active Idx |       Reserved       | Try Count | BP Update Reason         |
+# |       (1 byte)      | ... to fixed bp tail | (1 byte)  | (1 byte)                 |
+# ----------------------------------------------------------------------------------+
 #  * The "Checksum" is crc32 value for data from "BP Version" to the last byte of BP.
 #  * The "BP Version" is a version to check the latest of boot parameters.
 #  * The "BP Format Version" is a version to manage the format of boot parameters.
@@ -73,6 +73,10 @@ SIZE_OF_BP_PARTITION = SIZE_OF_BPx * 2
 #  * The "BP Update Reason" is the last successful reason for updating BP.
 #    It is located at the last byte of each 4KB BP so the bootloader can update
 #    it without knowing the variable app/resource data layout.
+#  * "Try Count" occupies offset 4094, immediately before BP Update Reason.
+#    Factory BPs initialize it to 0 (confirmed). Runtime updates set it to 1;
+#    the OS records up to five attempts, then rolls back to the other A/B set.
+#    Legacy BPs have 0xff in this byte, which the OS treats as confirmed.
 #
 ###########################################################################################
 
@@ -98,6 +102,7 @@ def make_bootparam():
 
     INITIAL_ACTIVE_IDX = 0
     INITIAL_BP_REASON = 0
+    INITIAL_TRY_COUNT = 0
 
     # Check partitions of kernel and bootparam
     kernel_address = []
@@ -171,8 +176,8 @@ def make_bootparam():
         with open(bootparam_file_path, 'a') as fp:
                 fp.write(struct.pack('B', INITIAL_ACTIVE_IDX))
 
-    # Fill remaining space with '0xff' up to the fixed BP tail and write bp_tail
-    bp_tail = struct.pack('B', INITIAL_BP_REASON)
+    # Pad with '0xff', then place try_count and the existing reason byte at the BP end.
+    bp_tail = struct.pack('BB', INITIAL_TRY_COUNT, INITIAL_BP_REASON)
     with open(bootparam_file_path, 'a') as fp:
         remain_size = SIZE_OF_BPx - (kernel_data_size + total_app_data_size + resource_data_size)
         fp.write(b'\xff' * (remain_size - len(bp_tail)))
